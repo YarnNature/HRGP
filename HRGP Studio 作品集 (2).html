@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRGP Studio | Liquid Glass</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234facfe'/%3E%3Cstop offset='1' stop-color='%2300f2fe'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%23050505'/%3E%3Crect x='8' y='8' width='48' height='48' rx='10' fill='none' stroke='url(%23g)' stroke-width='4'/%3E%3Ctext x='32' y='43' font-family='Segoe UI, Microsoft YaHei, sans-serif' font-size='28' font-weight='bold' fill='url(%23g)' text-anchor='middle'%3EH%3C/text%3E%3C/svg%3E">
+    <style>
+        /* 全局重置 */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+        body { background-color: #050505; color: #e0e0e0; line-height: 1.6; overflow-x: hidden; scroll-behavior: smooth; }
+
+        /* ================= 顶部导航栏 ================= */
+        header {
+            display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+            height: 64px; padding: 0 4%;
+            background-color: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: fixed; width: 100%; top: 0;
+            z-index: 1000; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .logo {
+            justify-self: start;
+            font-size: 22px; font-weight: bold;
+            color: #ffffff; letter-spacing: 1px; white-space: nowrap;
+            text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+        }
+        nav {
+            justify-self: center; position: relative;
+            display: flex; align-items: center; gap: 4px;
+        }
+        nav a { 
+            color: rgba(255, 255, 255, 0.78); text-decoration: none; 
+            padding: 8px 20px; border-radius: 18px; font-size: 15px;
+            transition: color 0.25s ease; cursor: pointer; font-weight: 500; 
+            white-space: nowrap; position: relative; z-index: 1;
+            text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+        }
+        nav a:hover { color: #ffffff; }
+        nav a.active { color: #ffffff; }
+        .nav-indicator {
+            position: absolute; top: 50%; left: 0; transform: translateY(-50%);
+            height: 34px; width: 0; border-radius: 17px;
+            background-color: rgba(255, 255, 255, 0.18);
+            transition: transform 0.35s cubic-bezier(0.22, 0.9, 0.3, 1), width 0.35s cubic-bezier(0.22, 0.9, 0.3, 1);
+            z-index: 0; pointer-events: none;
+        }
+
+        /* ================= 轮播图区域 ================= */
+        .hero-slider { position: relative; width: 100%; height: 100vh; overflow: hidden; background-color: #000; }
+        @supports (height: 100svh) { .hero-slider { height: 100svh; } }
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1s ease-in-out; display: flex; justify-content: center; align-items: center; }
+        .slide.active { opacity: 1; z-index: 1; }
+        
+        .slide-img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            transform: scale(1); transition: transform 7s linear;
+        }
+        .slide.active .slide-img { transform: scale(1.08); }
+
+        .slide-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(5,5,5,0.9) 100%); z-index: 2; }
+        
+        .hero-content { 
+            position: relative; z-index: 3; text-align: center; padding: 0 20px; 
+            transform: translateY(20px); opacity: 0; transition: all 1s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+        .slide.active .hero-content { transform: translateY(0); opacity: 1; transition-delay: 0.3s; }
+        .hero-content h1 { font-size: 4.5rem; margin-bottom: 20px; text-shadow: 0 4px 15px rgba(0,0,0,0.7); letter-spacing: 2px; }
+        .hero-content p { font-size: 1.3rem; color: #e0e0e0; max-width: 700px; margin: 0 auto 40px; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+        
+        .btn {
+            padding: 14px 40px; border-radius: 25px; 
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: rgba(142, 142, 142, 0.19) 0px 6px 15px 0px;
+            color: #fff; text-decoration: none; font-weight: bold; font-size: 1.1rem;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            cursor: pointer; display: inline-block; 
+        }
+        .btn:hover { 
+            transform: translateY(-3px) scale(1.05); 
+            background-color: rgba(255, 255, 255, 0.1);
+            box-shadow: rgba(142, 142, 142, 0.3) 0px 10px 25px 0px;
+        }
+
+        /* 轮播控制 */
+        .slider-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #fff; width: 50px; height: 50px; border-radius: 50%; font-size: 20px; cursor: pointer;
+            transition: all 0.3s; display: flex; justify-content: center; align-items: center; 
+        }
+        .slider-arrow:hover { background-color: rgba(255, 255, 255, 0.15); transform: translateY(-50%) scale(1.1); }
+        .arrow-prev { left: 30px; } .arrow-next { right: 30px; }
+        
+        .slider-dots { position: absolute; bottom: 40px; width: 100%; display: flex; justify-content: center; gap: 12px; z-index: 10; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.3); cursor: pointer; transition: all 0.3s; }
+        .dot.active { background: #fff; box-shadow: 0 0 10px #fff; width: 30px; border-radius: 10px; }
+
+        /* ================= 作品展示区 ================= */
+        .works {
+            padding: 120px 5%;
+            background-image: url('https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/EMjzbIPrCo0xD3xNrxYcPUMwnvb');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; 
+            position: relative;
+            z-index: 20;
+        }
+        .works::before {
+            content: '';
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, #050505 0%, rgba(5, 5, 5, 0.8) 20%, rgba(5, 5, 5, 0.95) 100%);
+            z-index: -1;
+        }
+
+        .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+        .section-subtitle { text-align: center; color: #aaa; margin-bottom: 50px; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+        
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+        
+        .card {
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 25px; 
+            padding: 30px;
+            box-shadow: rgba(142, 142, 142, 0.19) 0px 6px 15px 0px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; overflow: hidden; 
+            opacity: 0; transform: translateY(40px);
+            /* 增加手型光标提示可点击 */
+            cursor: pointer;
+        }
+        
+        .card.show { opacity: 1; transform: translateY(0); }
+        
+        .card:hover { 
+            transform: translateY(-8px) scale(1.02); 
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: rgba(142, 142, 142, 0.3) 0px 15px 35px 0px;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%);
+            opacity: 0; transition: opacity 0.4s ease; transform: rotate(45deg); pointer-events: none;
+        }
+        .card:hover::before { opacity: 1; }
+
+        .card-icon { font-size: 35px; margin-bottom: 15px; transition: transform 0.3s; }
+        .card:hover .card-icon { transform: scale(1.1) rotate(5deg); }
+        .card h3 { font-size: 1.3rem; margin-bottom: 10px; color: #fff; }
+        .card p { color: #bbb; font-size: 0.95rem; }
+        .card-info { display: flex; justify-content: space-between; font-size: 0.85rem; color: #999; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; }
+
+        /* ================= 全部图片图集 ================= */
+        .gallery { padding: 100px 5%; background-color: #070707; }
+        .gallery-group-title {
+            font-size: 1.25rem; color: #fff; margin: 30px 0 18px; font-weight: 600;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .gallery-group-title::before { content: ''; width: 6px; height: 20px; border-radius: 3px; background: linear-gradient(180deg, #4facfe, #00f2fe); }
+        .gallery-group-title:first-of-type { margin-top: 0; }
+        .gallery-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .gallery-grid.small-grid { grid-template-columns: 1fr; }
+        @media (min-width: 560px) {
+            .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+            .gallery-grid.small-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (min-width: 900px) {
+            .gallery-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (min-width: 1200px) {
+            .gallery-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        .gallery-item {
+            display: flex; flex-direction: column; position: relative;
+            border-radius: 18px; overflow: hidden;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            box-shadow: rgba(142, 142, 142, 0.19) 0px 6px 15px 0px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+        }
+        .gallery-item:hover { 
+            transform: translateY(-6px) scale(1.02); 
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: rgba(142, 142, 142, 0.3) 0px 12px 30px 0px;
+        }
+        .gallery-item .thumb { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; background-color: #000; }
+        .gallery-item .thumb.contain { object-fit: contain; }
+        .gallery-item .cap {
+            display: flex; justify-content: space-between; align-items: center; gap: 8px;
+            padding: 10px 14px; font-size: 0.85rem; color: #bbb;
+        }
+        .gallery-item .cap b { color: #fff; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .gallery-item .cap i { color: #4facfe; font-style: normal; font-size: 0.8rem; white-space: nowrap; }
+        .gallery-note { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 24px; gap: 10px; }
+        .gallery-note h3 { color: #fff; font-size: 1.1rem; }
+        .gallery-note p { color: #999; font-size: 0.9rem; }
+
+        /* ================= 模态框 ================= */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        
+        .modal-content {
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: rgba(142, 142, 142, 0.19) 0px 6px 15px 0px;
+            border-radius: 25px; 
+            width: 90%; max-width: 400px;
+            padding: 35px 30px; text-align: center; position: relative; 
+            transform: scale(0.9) translateY(20px); 
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
+        
+        .close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: #aaa; font-size: 24px; cursor: pointer; transition: color 0.3s; }
+        .close-btn:hover { color: #fff; }
+        
+        .qq-header { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px; }
+        .qq-avatar { 
+            width: 50px; height: 50px; border-radius: 50%; 
+            background-color: #333; background-image: url('https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/DAIabSotLoiIVbxmGvBcxlTHnbv'); 
+            background-size: cover; background-position: center;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .qq-info { text-align: left; } 
+        .qq-info h4 { font-size: 1.1rem; color: #fff; margin-bottom: 4px; } 
+        .qq-info p { font-size: 0.85rem; color: #aaa; }
+        
+        .qr-box { background-color: #fff; padding: 15px; border-radius: 16px; display: inline-block; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .qr-box img { width: 200px; height: 200px; display: block; object-fit: contain; }
+        .modal-tip { color: #ccc; font-size: 0.9rem; }
+
+        /* 页脚 */
+        footer { text-align: center; padding: 40px 20px; background-color: #050505; border-top: 1px solid #1a1a1a; color: #666; font-size: 0.9rem; }
+
+        @media (max-width: 768px) {
+            .hero-content h1 { font-size: 2.5rem; } 
+            .hero-content p { font-size: 1rem; }
+            header { grid-template-columns: 1fr; height: auto; padding: 10px 4% 8px; gap: 8px; } 
+            .logo { justify-self: center; font-size: 19px; }
+            nav { justify-self: center; width: 100%; justify-content: center; flex-wrap: nowrap; gap: 4px; } 
+            nav a { padding: 6px 14px; font-size: 14px; } 
+            .nav-indicator { height: 28px; border-radius: 14px; } 
+            .slider-arrow { display: none; }
+            .works { background-attachment: scroll; } 
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">HRGP Studio</div>
+        <nav>
+            <div class="nav-indicator"></div>
+            <a href="#home" class="active">首页</a>
+            <a href="#works">作品</a>
+            <a href="#gallery">图集</a>
+            <a onclick="openModal('qqModal')">加入我们</a>
+        </nav>
+    </header>
+
+    <section id="home" class="hero-slider">
+        <div class="slide active">
+            <div class="slide-img" style="background-image: url('https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/PagGb2h78oOc57xT1kccvmTPnzc');"></div>
+            <div class="slide-overlay"></div>
+            <div class="hero-content">
+                <h1>HRGP Vibrant Visuals</h1>
+                <p>致力于为像素世界注入鲜活光影。从底层重构到光影渲染，探索视觉的无限可能。</p>
+                <a href="#works" class="btn">探索作品库</a>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div class="slide-img" style="background-image: url('https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/EorfbK4KOojoEgxoP8acYqrVnTe');"></div>
+            <div class="slide-overlay"></div>
+            <div class="hero-content">
+                <h1>LivelyView 系列</h1>
+                <p>充满活力的视觉体验，让每一次日出与日落都震撼人心。</p>
+                <a href="#works" class="btn">查看系列详情</a>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-img" style="background-image: url('https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/CpCwbYZ1Hozv2LxAWetcrl4mnAe');"></div>
+            <div class="slide-overlay"></div>
+            <div class="hero-content">
+                <h1>极致光影渲染</h1>
+                <p>体积光、水面反射、高精度材质，打造身临其境的方块世界。</p>
+                <a href="#works" class="btn">了解核心技术</a>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-img" style="background-image: url('https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/EK1EbjvWQouzGNxGjK7cKJ4gnoe');"></div>
+            <div class="slide-overlay"></div>
+            <div class="hero-content">
+                <h1>色彩与氛围</h1>
+                <p>重新定义环境色调，让花草树木的暖阳仿佛触手可及。</p>
+                <a href="#works" class="btn">进入视觉画廊</a>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-img" style="background-image: url('https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/SXDtbeHXzodILKxKA6ycfcUPnnd');"></div>
+            <div class="slide-overlay"></div>
+            <div class="hero-content">
+                <h1>HRGP Visuals 衍生</h1>
+                <p>不断进化的材质包与光影组合，满足你对画面的所有苛求。</p>
+                <a href="#works" class="btn">获取资源</a>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-img" style="background-image: url('https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/DoBdbKMUAogmWqxv4qFctWmgnPh');"></div>
+            <div class="slide-overlay"></div>
+            <div class="hero-content">
+                <h1>原版重构加强包</h1>
+                <p>在原版基础上进行深度强化的图形包，性能与画质的完美平衡。</p>
+                <a href="#works" class="btn">立即体验</a>
+            </div>
+        </div>
+
+        <button class="slider-arrow arrow-prev" onclick="moveSlide(-1)">&#10094;</button>
+        <button class="slider-arrow arrow-next" onclick="moveSlide(1)">&#10095;</button>
+        
+        <div class="slider-dots">
+            <div class="dot active" onclick="currentSlide(0)"></div>
+            <div class="dot" onclick="currentSlide(1)"></div>
+            <div class="dot" onclick="currentSlide(2)"></div>
+            <div class="dot" onclick="currentSlide(3)"></div>
+            <div class="dot" onclick="currentSlide(4)"></div>
+            <div class="dot" onclick="currentSlide(5)"></div>
+        </div>
+    </section>
+
+    <section id="works" class="works">
+        <h2 class="section-title">工作室作品</h2>
+        <p class="section-subtitle">点击卡片查看下载方式 · 总大小 1.2GB+</p>
+
+        <div class="grid-container">
+            <!-- 给每个卡片添加 onclick 事件，触发下载弹窗 -->
+            <div class="card" onclick="openModal('downloadModal')">
+                <div class="card-icon">📁</div>
+                <h3>LivelyView 系列</h3>
+                <p>充满活力的视觉体验系列。</p>
+                <div class="card-info"><span>1 个文件</span><span>08/29 更新</span></div>
+            </div>
+            <div class="card" onclick="openModal('downloadModal')">
+                <div class="card-icon">⚙️</div>
+                <h3>HRGP 优化底包</h3>
+                <p>性能与画质的完美平衡基础包。</p>
+                <div class="card-info"><span>1 个文件</span><span>08/29 更新</span></div>
+            </div>
+            <div class="card" onclick="openModal('downloadModal')">
+                <div class="card-icon">✨</div>
+                <h3>HRGP Visuals (含衍生)</h3>
+                <p>核心视觉作品及丰富的衍生版本。</p>
+                <div class="card-info"><span>10 个文件</span><span>08/20 更新</span></div>
+            </div>
+            <div class="card" onclick="openModal('downloadModal')">
+                <div class="card-icon">🕰️</div>
+                <h3>YAN延迟渲染 (已成历史)</h3>
+                <p>环境光与冯都祀子。致敬过去的经典。</p>
+                <div class="card-info"><span>7 个文件</span><span>05/07 更新</span></div>
+            </div>
+            <div class="card" onclick="openModal('downloadModal')">
+                <div class="card-icon">📱</div>
+                <h3>我的世界拼多多客户端</h3>
+                <p>特定环境下的整合客户端文件。</p>
+                <div class="card-info"><span>1 个文件</span><span>05/04 更新</span></div>
+            </div>
+            <div class="card" onclick="openModal('downloadModal')">
+                <div class="card-icon">🏔️</div>
+                <h3>光影测试地形</h3>
+                <p>用于测试光影表现的专用地形存档。</p>
+                <div class="card-info"><span>1 个文件</span><span>04/22 更新</span></div>
+            </div>
+            <div class="card" onclick="openModal('downloadModal')">
+                <div class="card-icon">🧱</div>
+                <h3>HRGP原版重构加强图形包</h3>
+                <p>在原版基础上进行深度强化的图形包。</p>
+                <div class="card-info"><span>2 个文件</span><span>03/24 更新</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= 全部图片图集 ================= -->
+    <section id="gallery" class="gallery">
+        <h2 class="section-title">全部图片链接</h2>
+        <p class="section-subtitle">共 16 张 · 点击任意图片在新标签页打开原图链接</p>
+
+        <h3 class="gallery-group-title">作品预览图</h3>
+        <div class="gallery-grid">
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/PagGb2h78oOc57xT1kccvmTPnzc" target="_blank" rel="noopener">
+                <img class="thumb" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/PagGb2h78oOc57xT1kccvmTPnzc" alt="1.jpg" loading="lazy">
+                <span class="cap"><b>1.jpg</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/EorfbK4KOojoEgxoP8acYqrVnTe" target="_blank" rel="noopener">
+                <img class="thumb" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/EorfbK4KOojoEgxoP8acYqrVnTe" alt="2.jpg" loading="lazy">
+                <span class="cap"><b>2.jpg</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/CpCwbYZ1Hozv2LxAWetcrl4mnAe" target="_blank" rel="noopener">
+                <img class="thumb" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/CpCwbYZ1Hozv2LxAWetcrl4mnAe" alt="3.jpg" loading="lazy">
+                <span class="cap"><b>3.jpg</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/EK1EbjvWQouzGNxGjK7cKJ4gnoe" target="_blank" rel="noopener">
+                <img class="thumb" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/EK1EbjvWQouzGNxGjK7cKJ4gnoe" alt="4.jpg" loading="lazy">
+                <span class="cap"><b>4.jpg</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/SXDtbeHXzodILKxKA6ycfcUPnnd" target="_blank" rel="noopener">
+                <img class="thumb" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/SXDtbeHXzodILKxKA6ycfcUPnnd" alt="5.jpg" loading="lazy">
+                <span class="cap"><b>5.jpg</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/YsIRbcP9zoKIfexBt2WcLPiUnsS" target="_blank" rel="noopener">
+                <img class="thumb" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/YsIRbcP9zoKIfexBt2WcLPiUnsS" alt="5 - 副本.jpg" loading="lazy">
+                <span class="cap"><b>5 - 副本.jpg</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/DoBdbKMUAogmWqxv4qFctWmgnPh" target="_blank" rel="noopener">
+                <img class="thumb" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/DoBdbKMUAogmWqxv4qFctWmgnPh" alt="6.jpg" loading="lazy">
+                <span class="cap"><b>6.jpg</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/OS08bc6vdoMOJCxYNjEc9hvan5f" target="_blank" rel="noopener">
+                <img class="thumb" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/OS08bc6vdoMOJCxYNjEc9hvan5f" alt="a183716ea487dec83509b258a39bba65.png" loading="lazy">
+                <span class="cap"><b>a183716e….png</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/PIAFb05N3osdy6xY3grc65LMnUc" target="_blank" rel="noopener">
+                <img class="thumb" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/PIAFb05N3osdy6xY3grc65LMnUc" alt="aa1518b391ecd7912bf5894db9ef3f95.png" loading="lazy">
+                <span class="cap"><b>aa1518b3….png</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/UJJObph2OoVCFTxoccCc9UDrn9f" target="_blank" rel="noopener">
+                <img class="thumb" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/UJJObph2OoVCFTxoccCc9UDrn9f" alt="b9d51d79f12e9286de2edb93506a7a30.png" loading="lazy">
+                <span class="cap"><b>b9d51d79….png</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/UnhNbupEMoXjVAxbRyRcNKglnEf" target="_blank" rel="noopener">
+                <img class="thumb" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/UnhNbupEMoXjVAxbRyRcNKglnEf" alt="d171844e2e0f0b65ed4e0773792a819a.png" loading="lazy">
+                <span class="cap"><b>d171844e….png</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/XF80bV2Gio3a4kxQUtQc0YBZntd" target="_blank" rel="noopener">
+                <img class="thumb" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/XF80bV2Gio3a4kxQUtQc0YBZntd" alt="ece77e2e3a57b5a726c553bc456d999c.png" loading="lazy">
+                <span class="cap"><b>ece77e2e….png</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/EMjzbIPrCo0xD3xNrxYcPUMwnvb" target="_blank" rel="noopener">
+                <img class="thumb" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/EMjzbIPrCo0xD3xNrxYcPUMwnvb" alt="xray.png" loading="lazy">
+                <span class="cap"><b>xray.png</b><i>打开原图</i></span>
+            </a>
+            <div class="gallery-item gallery-note-card">
+                <div class="gallery-note">
+                    <h3>更多作品持续更新中</h3>
+                    <p>以上共 13 张作品预览图，点击任意图片可查看原图链接。</p>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="gallery-group-title">群聊 / 下载用图</h3>
+        <div class="gallery-grid small-grid">
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/DAIabSotLoiIVbxmGvBcxlTHnbv" target="_blank" rel="noopener">
+                <img class="thumb contain" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/DAIabSotLoiIVbxmGvBcxlTHnbv" alt="x.png" loading="lazy">
+                <span class="cap"><b>x.png</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/UoArbaCovoYfSbxxRgucuUTbnOd" target="_blank" rel="noopener">
+                <img class="thumb contain" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/UoArbaCovoYfSbxxRgucuUTbnOd" alt="qrcode.png" loading="lazy">
+                <span class="cap"><b>qrcode.png</b><i>打开原图</i></span>
+            </a>
+            <a class="gallery-item" href="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/Pjcibw7RZoYLxfxb7xFcLTjSnZb" target="_blank" rel="noopener">
+                <img class="thumb contain" src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/Pjcibw7RZoYLxfxb7xFcLTjSnZb" alt="D.png" loading="lazy">
+                <span class="cap"><b>D.png</b><i>打开原图</i></span>
+            </a>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2024 HRGP Studio. All Rights Reserved.</p>
+        <p style="margin-top: 10px;"><a onclick="openModal('qqModal')" style="color: #4facfe; cursor: pointer; text-decoration: none;">点击此处加入官方 QQ 群</a></p>
+    </footer>
+
+    <!-- ================= 弹窗 1：QQ 群聊 ================= -->
+    <div class="modal-overlay" id="qqModal" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal(event)">×</button>
+            <div class="qq-header">
+                <div class="qq-avatar"></div>
+                <div class="qq-info">
+                    <h4>HRGP Visuals Studios</h4>
+                    <p>群号: 1121496431</p>
+                </div>
+            </div>
+            <div class="qr-box">
+                <!-- 群二维码图片 -->
+                <img src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/UoArbaCovoYfSbxxRgucuUTbnOd" alt="扫码加入群聊" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=QQ群:1121496431'">
+            </div>
+            <p class="modal-tip">扫一扫二维码，加入群聊</p>
+        </div>
+    </div>
+
+    <!-- ================= 弹窗 2：作品统一下载 ================= -->
+    <div class="modal-overlay" id="downloadModal" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal(event)">×</button>
+            <div class="qq-header">
+                <!-- 这里如果也有头像可以替换，目前使用文字 -->
+                <div class="qq-info" style="text-align: center; width: 100%;">
+                    <h4>HRGP Vibrant Visuals</h4>
+                    <p>获取/下载作品</p>
+                </div>
+            </div>
+            <div class="qr-box">
+                <!-- 下载统一使用的 D.png -->
+                <img src="https://media.doubao.com/space/api/box/stream/download/all_by_mount_point/Pjcibw7RZoYLxfxb7xFcLTjSnZb" alt="扫码下载" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=扫码获取HRGP Vibrant Visuals'">
+            </div>
+            <p class="modal-tip">请扫码或前往群文件下载</p>
+        </div>
+    </div>
+
+    <script>
+        // 轮播图逻辑
+        let slideIndex = 0;
+        const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.dot');
+        let slideInterval;
+        const intervalTime = 5000;
+
+        function showSlides(n) {
+            if (n >= slides.length) slideIndex = 0;
+            if (n < 0) slideIndex = slides.length - 1;
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            slides[slideIndex].classList.add('active');
+            dots[slideIndex].classList.add('active');
+        }
+
+        function moveSlide(n) { showSlides(slideIndex += n); resetTimer(); }
+        function currentSlide(n) { showSlides(slideIndex = n); resetTimer(); }
+        function startTimer() { slideInterval = setInterval(() => { moveSlide(1); }, intervalTime); }
+        function resetTimer() { clearInterval(slideInterval); startTimer(); }
+
+        const sliderContainer = document.querySelector('.hero-slider');
+        sliderContainer.addEventListener('mouseenter', () => clearInterval(slideInterval));
+        sliderContainer.addEventListener('mouseleave', startTimer);
+
+        showSlides(slideIndex);
+        startTimer();
+
+        // 滚动加载动画
+        const observerOptions = { threshold: 0.1, rootMargin: "0px 0px -50px 0px" };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => { entry.target.classList.add('show'); }, index * 100); 
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+        document.querySelectorAll('.card').forEach(card => { observer.observe(card); });
+
+        // 模态框通用逻辑
+        // 现在接受一个 id 参数，用于决定打开哪个弹窗
+        function openModal(modalId) { 
+            const targetModal = document.getElementById(modalId);
+            if(targetModal) {
+                targetModal.classList.add('active'); 
+                document.body.style.overflow = 'hidden'; 
+            }
+        }
+        
+        function closeModal(event) {
+            // 如果点击的是遮罩层（背景）或者关闭按钮
+            if (event.target.classList.contains('modal-overlay') || event.target.classList.contains('close-btn')) {
+                const modal = event.target.closest('.modal-overlay');
+                if(modal) {
+                    modal.classList.remove('active'); 
+                    document.body.style.overflow = ''; 
+                }
+            }
+        }
+
+        // 导航栏滚动高亮 + 滑块指示器
+        const navEl = document.querySelector('nav');
+        const navIndicator = document.querySelector('.nav-indicator');
+        const navLinks = document.querySelectorAll('nav a[href^="#"]');
+        const navSections = document.querySelectorAll('section[id]');
+
+        function moveNavIndicator(link) {
+            if (!link) return;
+            const linkRect = link.getBoundingClientRect();
+            const navRect = navEl.getBoundingClientRect();
+            navIndicator.style.width = linkRect.width + 'px';
+            navIndicator.style.transform = 'translateY(-50%) translateX(' + (linkRect.left - navRect.left) + 'px)';
+        }
+
+        function updateNavActive() {
+            let currentId = '';
+            navSections.forEach(sec => {
+                if (window.scrollY >= sec.offsetTop - 140) currentId = sec.getAttribute('id');
+            });
+            let activeLink = null;
+            navLinks.forEach(a => {
+                const isActive = a.getAttribute('href') === '#' + currentId;
+                a.classList.toggle('active', isActive);
+                if (isActive) activeLink = a;
+            });
+            moveNavIndicator(activeLink);
+        }
+        navLinks.forEach(a => {
+            a.addEventListener('click', () => moveNavIndicator(a));
+        });
+        window.addEventListener('scroll', updateNavActive, { passive: true });
+        window.addEventListener('resize', updateNavActive, { passive: true });
+        updateNavActive();
+    </script>
+</body>
+</html>
+<!-- （注：内容由AI生成） -->
